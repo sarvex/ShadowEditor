@@ -56,7 +56,7 @@ def buildUrl(text, tk):
   #return 'https://translate.google.cn/translate_a/single?client=webapp&sl=zh-CN&tl=ja&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&source=bh&ssel=0&tsel=0&kc=1&tk=' + tk + '&q=' + text # 中文翻译日语
   #return 'https://translate.google.cn/translate_a/single?client=webapp&sl=zh-CN&tl=ko&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ssel=0&tsel=4&kc=0&tk=' + tk + '&q=' + text # 中文翻译韩语
   #return 'https://translate.google.cn/translate_a/single?client=webapp&sl=zh-CN&tl=ru&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&otf=1&ssel=3&tsel=4&kc=1&tk=' + tk + '&q=' + text # 中文翻译俄语
-  return 'https://translate.google.cn/translate_a/single?client=webapp&sl=zh-CN&tl=fr&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&otf=1&ssel=0&tsel=4&kc=1&tk=' + tk + '&q=' + text  # 中文翻译法语
+  return f'https://translate.google.cn/translate_a/single?client=webapp&sl=zh-CN&tl=fr&hl=zh-CN&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&otf=1&ssel=0&tsel=4&kc=1&tk={tk}&q={text}'
 
 
 def translate(text):
@@ -75,42 +75,39 @@ def translate(text):
   url = buildUrl(text, js.getTk(text))
   res = ''
   try:
-      r = requests.get(url)
-      print(r)
-      result = json.loads(r.text)
-      if result[7] != None:
+    r = requests.get(url)
+    print(r)
+    result = json.loads(r.text)
+    if result[7] is None:
+      res = result[0][0][0]
+    else:
         # 如果我们文本输错，提示你是不是要找xxx的话，那么重新把xxx正确的翻译之后返回
-          try:
-              correctText = result[7][0].replace(
-                  '<b><i>', ' ').replace('</i></b>', '')
-              print(correctText)
-              correctUrl = buildUrl(correctText, js.getTk(correctText))
-              correctR = requests.get(correctUrl)
-              newResult = json.loads(correctR.text)
-              res = newResult[0][0][0]
-          except Exception as e:
-              print(e)
-              res = result[0][0][0]
-      else:
+      try:
+          correctText = result[7][0].replace(
+              '<b><i>', ' ').replace('</i></b>', '')
+          print(correctText)
+          correctUrl = buildUrl(correctText, js.getTk(correctText))
+          correctR = requests.get(correctUrl)
+          newResult = json.loads(correctR.text)
+          res = newResult[0][0][0]
+      except Exception as e:
+          print(e)
           res = result[0][0][0]
   except Exception as e:
-      res = ''
-      print(url)
-      print("翻译"+text+"失败")
-      print("错误信息:")
-      print(e)
+    res = ''
+    print(url)
+    print(f"翻译{text}失败")
+    print("错误信息:")
+    print(e)
   finally:
-      return res
+    return res
 
 
 js = Py4Js()
 
-# 将一种语言翻译成另外一种语言
-file = open(
-    'E:\github\ShadowEditor\ShadowEditor.Web\locales\zh-CN.json', encoding='utf-8')
-data = file.read()
-file.close()
-
+with open(
+    'E:\github\ShadowEditor\ShadowEditor.Web\locales\zh-CN.json', encoding='utf-8') as file:
+  data = file.read()
 list = json.loads(data)
 #print(list)
 
@@ -121,10 +118,9 @@ for key in list:
   list2[key] = value
   print(key)
 
-file = open('E:\github\ShadowEditor\ShadowEditor.Web\locales\\fr-FR.json',
-            'w', encoding='utf-8')
-file.write(json.dumps(list2, ensure_ascii=False))
-file.close()
+with open('E:\github\ShadowEditor\ShadowEditor.Web\locales\\fr-FR.json',
+            'w', encoding='utf-8') as file:
+  file.write(json.dumps(list2, ensure_ascii=False))
 
 #res = translate('日语')
 #print(res)
